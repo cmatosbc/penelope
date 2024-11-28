@@ -12,7 +12,7 @@ class PerformanceTest extends TestCase
     private string $transformFile;
     private string $outputFile;
     private int $fileSize = 100 * 1024 * 1024; // 100MB for regular tests
-    private int $transformFileSize = 1 * 1024 * 1024; // 1MB for transform tests
+    private int $transformFileSize = 10 * 1024 * 1024; // 10MB for transform tests
     private int $chunkSize = 8192; // 8KB chunks
     
     protected function setUp(): void
@@ -91,9 +91,14 @@ class PerformanceTest extends TestCase
     {
         $handler = new AsyncFileHandler($this->transformFile, 'r', $this->chunkSize);
         
-        // Set up whitespace removal transformation
+        // Set up handler with a more complex transformation
         $handler->setTransformCallable(function(string $chunk): string {
-            return preg_replace('/\s+/', '', $chunk);
+            // More complex transformation that simulates real-world processing
+            $chunk = preg_replace('/\s+/', '', $chunk); // Remove whitespace
+            $chunk = str_rot13($chunk); // Apply ROT13 encoding
+            $chunk = base64_encode($chunk); // Base64 encode
+            $chunk = strtr($chunk, '+/', '-_'); // URL-safe base64
+            return $chunk;
         });
         
         // Measure sync read with transform
