@@ -1,5 +1,7 @@
 # Penelope 🧵
 
+[![PHP Composer](https://github.com/cmatosbc/penelope/actions/workflows/composer.yml/badge.svg)](https://github.com/cmatosbc/penelope/actions/workflows/composer.yml)
+
 A high-performance asynchronous file handling library for PHP, leveraging Fibers for non-blocking I/O operations.
 
 ## 🚀 Overview
