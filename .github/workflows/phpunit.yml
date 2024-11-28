@@ -1,4 +1,4 @@
-name: PHP 8.1 PHPUnit Tests
+name: PHP 8.2 PHPUnit Tests
 
 on:
   push:
@@ -13,10 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up PHP 8.1
+      - name: Set up PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
 
       - name: Install dependencies
         run: composer install --no-interaction
