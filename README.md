@@ -24,7 +24,7 @@ Penelope is designed to handle large file operations efficiently by utilizing PH
 ## 🛠 Installation
 
 ```bash
-composer require your-vendor/penelope
+composer require cmatosbc/penelope
 ```
 
 ## 📖 Usage
