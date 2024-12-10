@@ -1,5 +1,7 @@
 # Penelope 🧵
 
+[![PHP Composer](https://github.com/cmatosbc/penelope/actions/workflows/composer.yml/badge.svg)](https://github.com/cmatosbc/penelope/actions/workflows/composer.yml) [![PHP 8.2 PHPUnit Tests](https://github.com/cmatosbc/penelope/actions/workflows/phpunit.yml/badge.svg)](https://github.com/cmatosbc/penelope/actions/workflows/phpunit.yml)
+
 A high-performance asynchronous file handling library for PHP, leveraging Fibers for non-blocking I/O operations.
 
 ## 🚀 Overview
@@ -27,7 +29,7 @@ Penelope is designed to handle large file operations efficiently by utilizing PH
 ## 🛠 Installation
 
 ```bash
-composer require your-vendor/penelope
+composer require cmatosbc/penelope
 
 # For bzip2 support (Ubuntu/Debian)
 sudo apt-get install php-bz2
