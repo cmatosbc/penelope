@@ -15,16 +15,24 @@ Penelope is designed to handle large file operations efficiently by utilizing PH
 - **Flexible**: Support for both synchronous and asynchronous operations
 - **Transformable**: Apply custom transformations during read/write operations
 - **Progress Tracking**: Monitor write progress in real-time
+- **Compression Support**: Built-in support for gzip, bzip2, and deflate compression
+- **Error Resilience**: Robust error handling with retry mechanisms and logging
 
 ## 📋 Requirements
 
 - PHP 8.1 or higher (Fiber support required)
 - Composer for dependency management
+- PHP Extensions:
+  - `zlib` for gzip/deflate compression
+  - `bz2` for bzip2 compression (optional)
 
 ## 🛠 Installation
 
 ```bash
 composer require cmatosbc/penelope
+
+# For bzip2 support (Ubuntu/Debian)
+sudo apt-get install php-bz2
 ```
 
 ## 📖 Usage
@@ -57,47 +65,95 @@ while ($fiber->isSuspended()) {
 }
 ```
 
-### Basic File Writing
+### Compression Support
 
 ```php
-$handler = new AsyncFileHandler('output.txt', 'w');
+use Penelope\Compression\CompressionHandler;
 
-// Synchronous write
-$written = $handler->writeSync($data);
+// Create a compression handler (gzip, bzip2, or deflate)
+$compression = new CompressionHandler('gzip', 6); // level 6 compression
 
-// Asynchronous write with progress tracking
-$fiber = $handler->writeAsync($data);
+// Compress data
+$compressed = $compression->compress($data);
 
-$progress = $fiber->start();
-while ($fiber->isSuspended()) {
-    $progress = $fiber->resume();
-    if ($progress !== null) {
-        echo "Progress: {$progress['progress']}%\n";
-    }
+// Decompress data
+$decompressed = $compression->decompress($compressed);
+
+// Get file extension for compressed files
+$extension = $compression->getFileExtension(); // Returns .gz for gzip
+```
+
+### Error Handling with Retries
+
+```php
+use Penelope\Error\ErrorHandler;
+use Penelope\Error\RetryPolicy;
+use Psr\Log\LoggerInterface;
+
+// Create a retry policy with custom settings
+$retryPolicy = new RetryPolicy(
+    maxAttempts: 3,        // Maximum number of retry attempts
+    delayMs: 100,          // Initial delay between retries in milliseconds
+    backoffMultiplier: 2.0, // Multiplier for exponential backoff
+    maxDelayMs: 5000       // Maximum delay between retries
+);
+
+// Create an error handler with custom logger (optional)
+$errorHandler = new ErrorHandler($logger, $retryPolicy);
+
+// Execute an operation with retry logic
+try {
+    $result = $errorHandler->executeWithRetry(
+        function() {
+            // Your operation here
+            return $someResult;
+        },
+        'Reading file chunk'
+    );
+} catch (\RuntimeException $e) {
+    // Handle final failure after all retries
 }
 ```
 
-### Data Transformation
+### Combining Features
 
 ```php
-$handler = new AsyncFileHandler('data.txt', 'r');
+use Penelope\AsyncFileHandler;
+use Penelope\Compression\CompressionHandler;
+use Penelope\Error\ErrorHandler;
+use Penelope\Error\RetryPolicy;
 
-// Set up a transformation (e.g., remove whitespace)
-$handler->setTransformCallable(function(string $chunk): string {
-    return preg_replace('/\s+/', '', $chunk);
-});
+// Set up handlers
+$compression = new CompressionHandler('gzip');
+$retryPolicy = new RetryPolicy(maxAttempts: 3);
+$errorHandler = new ErrorHandler(null, $retryPolicy);
+$fileHandler = new AsyncFileHandler('large_file.txt', 'r');
 
-// Read with transformation
-$fiber = $handler->readAsync();
-$content = '';
-
-$chunk = $fiber->start();
-while ($chunk !== null || $fiber->isSuspended()) {
-    if ($chunk !== null) {
-        $content .= $chunk;  // Chunk is already transformed
-    }
-    $chunk = $fiber->resume();
-}
+// Read and compress file with retry logic
+$errorHandler->executeWithRetry(
+    function() use ($fileHandler, $compression) {
+        $fiber = $fileHandler->readAsync();
+        $compressedContent = '';
+        
+        // Start reading
+        $chunk = $fiber->start();
+        if ($chunk !== null) {
+            $compressedContent .= $compression->compress($chunk);
+        }
+        
+        // Continue reading
+        while ($fiber->isSuspended()) {
+            $chunk = $fiber->resume();
+            if ($chunk !== null) {
+                $compressedContent .= $compression->compress($chunk);
+            }
+        }
+        
+        // Write compressed content
+        file_put_contents('output.gz', $compressedContent);
+    },
+    'Compressing file'
+);
 ```
 
 ## 🎯 Use Cases
@@ -116,30 +172,19 @@ while ($chunk = $fiber->resume()) {
 }
 ```
 
-### 2. Real-time Data Transformation
-Ideal for data sanitization, format conversion, or content filtering:
+### 2. File Compression and Archiving
 
-```php
-$handler = new AsyncFileHandler('input.csv', 'r');
-$handler->setTransformCallable(function($chunk) {
-    return str_replace(',', ';', $chunk);  // Convert CSV to semicolon-separated
-});
-```
+- Compress large log files for archival
+- Create compressed backups of data files
+- Stream compressed data to remote storage
+- Process and compress multiple files in parallel
 
-### 3. Progress Monitoring
-Perfect for long-running file operations in web applications:
+### 3. Error-Resilient Operations
 
-```php
-$handler = new AsyncFileHandler('large_file.txt', 'w');
-$fiber = $handler->writeAsync($data);
-
-while ($fiber->isSuspended()) {
-    $progress = $fiber->resume();
-    if ($progress !== null) {
-        updateProgressBar($progress['progress']);
-    }
-}
-```
+- Retry failed network file transfers
+- Handle intermittent I/O errors gracefully
+- Log detailed error information for debugging
+- Implement progressive backoff for rate-limited operations
 
 ## 🔍 Performance
 
@@ -154,7 +199,7 @@ Based on our benchmarks with a 100MB file:
 
 ```bash
 composer install
-./vendor/bin/phpunit
+./vendor/bin/phpunit --testdox
 ```
 
 ## 🤝 Contributing

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
          displayDetailsOnTestsThatTriggerDeprecations="false"
@@ -9,8 +9,14 @@
          displayDetailsOnTestsThatTriggerNotices="true"
          displayDetailsOnTestsThatTriggerWarnings="true">
     <testsuites>
-        <testsuite name="Penelope Test Suite">
-            <directory>tests</directory>
+        <testsuite name="Async File Handler">
+            <file>tests/AsyncFileHandlerTest.php</file>
+        </testsuite>
+        <testsuite name="Compression">
+            <directory>tests/Compression</directory>
+        </testsuite>
+        <testsuite name="Performance">
+            <file>tests/PerformanceTest.php</file>
         </testsuite>
     </testsuites>
     <source>
